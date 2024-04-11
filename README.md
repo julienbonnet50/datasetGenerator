@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/831ab1a717f9482e9d71c4dcedb45220)](https://app.codacy.com/gh/julienbonnet50/datasetGenerator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 # datasetGenerator
 
 Dataset generic generator with any types and any level of nest 
@@ -8,7 +10,9 @@ Download Spark (currently working with *Spark 3.4.2*)
 
 Download jdk 17.0.8+7
 
-Download hadoop 3.3.0
+Download hadoop 3.3.0 
+
+Download https://github.com/kontext-tech/winutils/tree/master/hadoop-3.3.0/bin and replace hadoop3.3.0\bin
 
 ## Run
 
