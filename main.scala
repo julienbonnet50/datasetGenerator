@@ -5,6 +5,7 @@ object DatasetGenerator {
     import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
     import org.apache.spark.sql.functions._
     import org.apache.spark.sql.types._
+    import org.apache.spark.sql.{DataFrame, Row, SparkSession}
     
     private var datasetGeneratorContainsByte: Boolean = false
     private var datasetGeneratorContainsShort: Boolean = false
@@ -16,16 +17,22 @@ object DatasetGenerator {
     private var datasetGeneratorContainsString: Boolean = false
     private var datasetGeneratorContainsVarchar: Boolean = false
     private var datasetGeneratorContainsChar: Boolean = false
+    private var datasetGeneratorLevelOfNest: Integer = 0
+    private var datasetGeneratorNumberOfRows: Integer = 1
 
-    private var simpleType: Seq[String] = null
+    private var trueArgs: Seq[String] = Seq.empty
 
-    private var schema: StructType = null
+    private var schema: StructType = new StructType()
 
     def init(args: Array[String]): Unit = {
         @scala.annotation.tailrec
         def nextArg(map: Map[String, Any], list: List[String]): Map[String, Any] = {
             list match {
                 case Nil => map
+                case "--datasetGenerator-LevelOfNest" :: value :: tail =>
+                    nextArg(map ++ Map("datasetGeneratorLevelOfNest" -> value.toInt), tail)
+                case "--datasetGenerator-NumberOfRows" :: value :: tail =>
+                    nextArg(map ++ Map("datasetGeneratorNumberOfRows" -> value.toInt), tail)
                 case "--datasetGenerator-contains-byte" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorContainsByte" -> value.toBoolean), tail)
                 case "--datasetGenerator-contains-short" :: value :: tail =>
@@ -68,10 +75,8 @@ object DatasetGenerator {
             }
         }
 
-        def generateSchema(): Unit = {
-
-        }
-
+        datasetGeneratorLevelOfNest = getOption("datasetGeneratorLevelOfNest", 1).asInstanceOf[Integer]
+        datasetGeneratorNumberOfRows = getOption("datasetGeneratorNumberOfRows", 1).asInstanceOf[Integer]
         datasetGeneratorContainsByte = getOption("datasetGeneratorContainsByte", false).asInstanceOf[Boolean]
         datasetGeneratorContainsShort = getOption("datasetGeneratorContainsShort", false).asInstanceOf[Boolean]
         datasetGeneratorContainsInteger = getOption("datasetGeneratorContainsInteger", false).asInstanceOf[Boolean]
@@ -82,19 +87,66 @@ object DatasetGenerator {
         datasetGeneratorContainsString = getOption("datasetGeneratorContainsString", false).asInstanceOf[Boolean]
         datasetGeneratorContainsVarchar = getOption("datasetGeneratorContainsVarchar", false).asInstanceOf[Boolean]
         datasetGeneratorContainsChar = getOption("datasetGeneratorContainsChar", false).asInstanceOf[Boolean]
+
+        if (datasetGeneratorContainsByte == true) trueArgs :+= "Byte"
+        if (datasetGeneratorContainsInteger == true) trueArgs :+= "Integer"
+        if (datasetGeneratorContainsLong == true) trueArgs :+= "Long"
+        if (datasetGeneratorContainsShort == true) trueArgs :+= "Short"
+        if (datasetGeneratorContainsFloat == true) trueArgs :+= "Float"
+        if (datasetGeneratorContainsDouble == true) trueArgs :+= "Double"
+        if (datasetGeneratorContainsDecimal == true) trueArgs :+= "Decimal"
+        if (datasetGeneratorContainsString == true) trueArgs :+= "String"
+        if (datasetGeneratorContainsVarchar == true) trueArgs :+= "Varchar"
+        if (datasetGeneratorContainsChar == true) trueArgs :+= "Char"
     }
 
+    def generateSchema(fieldNames: Seq[String]): Unit = {
+        require(fieldNames.length > 0, "We should at least have 1 field to true")
+        for (field <- fieldNames) {
+            field match {
+                
+                /* Simple type */
+                case "Byte" => this.schema = this.schema.add(StructField("byte_field", ByteType, true))
+                case "Integer" => this.schema = this.schema.add(StructField("int_field", IntegerType, true))
+                case "Long" => this.schema = this.schema.add(StructField("long_field", LongType, true))
+                case "Short" => this.schema = this.schema.add(StructField("short_field", ShortType, true))
+                case "Float" => this.schema = this.schema.add(StructField("float_field", FloatType, true))
+                case "Double" => this.schema = this.schema.add(StructField("double_field", DoubleType, true))
+                case "Decimal" => this.schema = this.schema.add(StructField("decimal_field", DecimalType(1,1), true))
+                case "String" => this.schema = this.schema.add(StructField("string_field", StringType, true))
+                case "Varchar" => this.schema = this.schema.add(StructField("varchar_field", VarcharType(10), true))
+                case "Char" => this.schema = this.schema.add(StructField("char_field", CharType(10), true))
+                case _ => println("Unknown type found " + field)
+            }
+        }
+    }
+
+
     def main(): Unit = {
-        println("main running")
+        println("------- Main started running -------")
+
+        generateSchema(trueArgs)
+
+        println(schema)
 
         val spark = SparkSession
             .builder
             .appName("Dataset Generic Generator")
             .getOrCreate()
+
+        // Creating empty dataFrame with and empty value and right schema.
+        val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], schema)
+        
+        df.show()
+        df.printSchema
     }
 }
 
 DatasetGenerator.init(Array(
+    /* Principal setting */
+    "--datasetGenerator-LevelOfNest", "2",
+    "--datasetGenerator-NumberOfRows", "100",
+
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
     "--datasetGenerator-contains-short", "true",
@@ -106,8 +158,8 @@ DatasetGenerator.init(Array(
 
     /* String type */
     "--datasetGenerator-contains-string", "true",
-    "--datasetGenerator-contains-varchar", "true",
-    "--datasetGenerator-contains-char", "true"
+    "--datasetGenerator-contains-varchar", "false",
+    "--datasetGenerator-contains-char", "false"
 ))
 
 DatasetGenerator.main()
