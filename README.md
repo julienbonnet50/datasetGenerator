@@ -21,7 +21,7 @@ Run "spark-shell-3.4.2-launcher.bat" to run a Spark Shell running your main.scal
 ## Result
 
 Example of conf with simple type and just one level of nest :
-```bash
+```scala
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
     "--datasetGenerator-contains-short", "true",
@@ -38,7 +38,7 @@ Example of conf with simple type and just one level of nest :
 
 Result is :
 
-```bash
+```scala
 root
  |-- byte_field: byte (nullable = true)
  |-- int_field: integer (nullable = true)
@@ -50,7 +50,7 @@ root
  |-- string_field: string (nullable = true)
 ```
 with null values
-```bash
+```scala
 +----------+---------+----------+-----------+-----------+------------+-------------+------------+
 |byte_field|int_field|long_field|short_field|float_field|double_field|decimal_field|string_field|
 +----------+---------+----------+-----------+-----------+------------+-------------+------------+

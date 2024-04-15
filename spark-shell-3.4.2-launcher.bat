@@ -19,5 +19,6 @@ set "PATH=%JAVA_HOME%\bin;%HADOOP_HOME%\bin;%SPARK_HOME%\bin;%PATH%"
 :: Run spark-shell
 spark-shell.cmd ^
     -i {TODO: DEFINE}\main.scala ^
+    --name "Dataset Generic Generator" ^
     ::--master local[8] ^
     ::--driver-memory 6g
