@@ -24,6 +24,8 @@ Example of conf with simple type and just one level of nest :
 ```scala
     /* Principal setting */
     "--datasetGenerator-levelOfNest", "3",
+    "--datasetGenerator-NumberOfRows", "100",
+    "--datasetGenerator-pathToWrite", "pathTo/generatedDataset",
 
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
@@ -32,7 +34,7 @@ Example of conf with simple type and just one level of nest :
     "--datasetGenerator-contains-long", "true",
     "--datasetGenerator-contains-float", "true",
     "--datasetGenerator-contains-double", "true",
-    "--datasetGenerator-contains-decimal", "true",
+    "--datasetGenerator-contains-decimal", "false", // Todo
 
     /* String type */
     "--datasetGenerator-contains-string", "true",
@@ -85,4 +87,21 @@ root
  |    |    |    |    |    |    |    |-- key: string
  |    |    |    |    |    |    |    |-- value: string (valueContainsNull = true)
 ```
+Sample of data produced : 
 
+```scala
++-----------+-----------+--------------------+------------+-------------+--------------------+-------------+--------------------+--------------------+--------------------+
+|byte_field0| int_field0|         long_field0|short_field0| float_field0|       double_field0|string_field0|       struct_field0|        array_field0|          map_field0|
++-----------+-----------+--------------------+------------+-------------+--------------------+-------------+--------------------+--------------------+--------------------+
+|        -35|-2147483648|-1684404113781990136|      -32768|5.0318116E-29|5.279499723346444...|   17e25a70-f|{[{[{{e71d5677-c ...|            [{null}]|{60bd1b57-6 -> {{...|
+|       null| 2147483647|-2497803620918967283|           0|         null|                null|   62e1c62d-6|{[{[{{f4692a6a-4 ...|[{{0c4e57a7-c -> ...|{469ae207-2 -> {{...|
+|       -128| 1716461154| 2736668824320581175|      -32768|         null|-4.14773011547402...|         null|{[{[{{7827b70a-2 ...|[{{427188ec-2 -> ...|{2ce26f21-a -> {{...|
+|          0|-1482187783|                null|       32767|2.1087044E-20|                null|   d0702931-2|{[{[{{8d3c82e8-4 ...|[{{d5639220-7 -> ...|{1bba1cd9-7 -> {{...|
+|          0|          0|-9223372036854775808|      -24799|  2.755041E36|-4.25880588504422...|   010493c8-f|{[{[{{befdfa51-1 ...|[{{73db45c0-b -> ...|{78da45c4-f -> {{...|
+|        127|-1569212156| 9223372036854775807|      -30478|4.7504805E-18|8.315732226840309...|   a471240a-6|{[{[{{c9187e44-7 ...|[{{6af50bf6-8 -> ...|{0459e50f-a -> {n...|
+|         99|          0|                   0|       21323|      1.4E-45|                null|   344da294-7|{[{[{{962ea478-2 ...|              [null]|{39edee5a-1 -> {n...|
+|        -92| -248625655| 9223372036854775807|       27751| 3.4028235E38|                null|         null|{[{[{null}, {{575...|            [{null}]|{d231952c-5 -> {n...|
+|        -18|          0|                   0|      -32582|      1.4E-45|3.345009149433706...|   2a12d95a-9|{[{[{{878787dc-5 ...|[{{8340958a-0 -> ...|{061b1343-4 -> {{...|
+|         46|          0|                null|       23701| 1.4162762E-5|2.510435857565917...|   2998a1e5-f|{[{[{{8ba2d693-2 ...|[{{56672e26-b -> ...|                null|
++-----------+-----------+--------------------+------------+-------------+--------------------+-------------+--------------------+--------------------+--------------------+
+```

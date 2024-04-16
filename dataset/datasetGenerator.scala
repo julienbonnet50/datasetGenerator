@@ -1,15 +1,16 @@
+import java.util.Random;
+import java.math.MathContext
+
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
+
 object DatasetGenerator {
 
-    import java.io
-    import org.apache.spark.sql._
-    import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
-    import org.apache.spark.sql.functions._
-    import org.apache.spark.sql.types._
-    import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-    import java.util.Random;
-    
     private var datasetGeneratorlevelOfNest: Integer = 0
     private var datasetGeneratorNumberOfRows: Integer = 1
+    private var datasetGeneratorPathToWrite: String = "null"
 
     private var datasetGeneratorContainsByte: Boolean = false
     private var datasetGeneratorContainsShort: Boolean = false
@@ -30,6 +31,8 @@ object DatasetGenerator {
 
     private var schema: StructType = new StructType()
 
+    val random = new Random
+
 
     def init(args: Array[String]): Unit = {
         @scala.annotation.tailrec
@@ -40,6 +43,8 @@ object DatasetGenerator {
                     nextArg(map ++ Map("datasetGeneratorlevelOfNest" -> value.toInt), tail)
                 case "--datasetGenerator-NumberOfRows" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorNumberOfRows" -> value.toInt), tail)
+                case "--datasetGenerator-pathToWrite" :: value :: tail =>
+                    nextArg(map ++ Map("datasetGeneratorPathToWrite" -> value.toString), tail)
                 case "--datasetGenerator-contains-byte" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorContainsByte" -> value.toBoolean), tail)
                 case "--datasetGenerator-contains-short" :: value :: tail =>
@@ -90,6 +95,7 @@ object DatasetGenerator {
 
         datasetGeneratorlevelOfNest = getOption("datasetGeneratorlevelOfNest", 1).asInstanceOf[Integer]
         datasetGeneratorNumberOfRows = getOption("datasetGeneratorNumberOfRows", 1).asInstanceOf[Integer]
+        datasetGeneratorPathToWrite = getOption("datasetGeneratorPathToWrite", 1).asInstanceOf[String]
         datasetGeneratorContainsByte = getOption("datasetGeneratorContainsByte", false).asInstanceOf[Boolean]
         datasetGeneratorContainsShort = getOption("datasetGeneratorContainsShort", false).asInstanceOf[Boolean]
         datasetGeneratorContainsInteger = getOption("datasetGeneratorContainsInteger", false).asInstanceOf[Boolean]
@@ -131,12 +137,11 @@ object DatasetGenerator {
         }
 
         def pickRandomValue(values: Seq[String]): String = {
-            val random = new Random
+
             if (values.isEmpty) {
                 throw new IllegalArgumentException("Sequence cannot be empty")
             }
-
-            val randomIndex = random.nextInt(values.length)
+            val randomIndex = this.random.nextInt(values.length)
             values(randomIndex)
         }
 
@@ -234,8 +239,9 @@ object DatasetGenerator {
         println("level of nest : " + datasetGeneratorlevelOfNest)
         println("number of rows : " + datasetGeneratorNumberOfRows)
         println("true type arguments : " + trueArgs)
-    }            
-    
+    } 
+        
+     
     def main(): Unit = {
         val startTime = System.nanoTime()
 
@@ -243,19 +249,30 @@ object DatasetGenerator {
 
         showArgs()
 
-        println("\n ------- Dataset generation running (took : " + elapsedTime(startTime) + ") ------- \n")
+        println("\n ------- Schema generation started running ------- \n")
 
         schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest)
 
         println(schema)
 
-        // Creating empty dataFrame with and empty value and right schema.
-        val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], schema)
+        println("\n ------- Schema generation ended (took : " + elapsedTime(startTime) + ") ------- \n")
+
+        println("\n ------- Dataset generation starting (took : " + elapsedTime(startTime) + ") ------- \n")
+
+        val rows = (1 to 10).map(_ => RandomDataGenerator.randomRow(this.random, schema))
+
+        val df = spark.createDataFrame(spark.sparkContext.parallelize(rows), schema)
         
         println("\n ------- Dataset generated show (took : " + elapsedTime(startTime) + ") ------- \n")
+        
         df.show()
 
         println("\n ------- Schema generated (took : " + elapsedTime(startTime) + ") ------- \n")
+
         df.printSchema
+
+        println("\n ------- Saving dataset into /dataset/generatedDataset.parquet ------- \n")
+
+        df.write.format("parquet").mode("overwrite").save(datasetGeneratorPathToWrite)
     }
 }

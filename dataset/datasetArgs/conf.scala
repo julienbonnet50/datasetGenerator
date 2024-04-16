@@ -2,6 +2,7 @@ val confArray = Array(
     /* Principal setting */
     "--datasetGenerator-levelOfNest", "3",
     "--datasetGenerator-NumberOfRows", "100",
+    "--datasetGenerator-pathToWrite", "pathTo/generatedDataset",
 
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
@@ -10,7 +11,7 @@ val confArray = Array(
     "--datasetGenerator-contains-long", "true",
     "--datasetGenerator-contains-float", "true",
     "--datasetGenerator-contains-double", "true",
-    "--datasetGenerator-contains-decimal", "true",
+    "--datasetGenerator-contains-decimal", "false", // Todo
 
     /* String type */
     "--datasetGenerator-contains-string", "true",
