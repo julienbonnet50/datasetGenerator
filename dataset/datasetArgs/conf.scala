@@ -1,4 +1,4 @@
-DatasetGenerator.init(Array(
+val confArray = Array(
     /* Principal setting */
     "--datasetGenerator-levelOfNest", "3",
     "--datasetGenerator-NumberOfRows", "100",
@@ -21,6 +21,4 @@ DatasetGenerator.init(Array(
     "--datasetGenerator-contains-struct", "true",
     "--datasetGenerator-contains-array", "true",
     "--datasetGenerator-contains-map", "true"
-))
-
-DatasetGenerator.main()
+)

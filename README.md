@@ -22,6 +22,9 @@ Run "spark-shell-3.4.2-launcher.bat" to run a Spark Shell running your main.scal
 
 Example of conf with simple type and just one level of nest :
 ```scala
+    /* Principal setting */
+    "--datasetGenerator-levelOfNest", "3",
+
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
     "--datasetGenerator-contains-short", "true",
@@ -33,26 +36,53 @@ Example of conf with simple type and just one level of nest :
 
     /* String type */
     "--datasetGenerator-contains-string", "true",
-    "--datasetGenerator-contains-char", "false"
+    "--datasetGenerator-contains-varchar", "false",
+    "--datasetGenerator-contains-char", "false",
+
+    /* Complex type */
+    "--datasetGenerator-contains-struct", "true",
+    "--datasetGenerator-contains-array", "true",
+    "--datasetGenerator-contains-map", "true"
 ```
 
 Result is :
 
 ```scala
 root
- |-- byte_field: byte (nullable = true)
- |-- int_field: integer (nullable = true)
- |-- long_field: long (nullable = true)
- |-- short_field: short (nullable = true)
- |-- float_field: float (nullable = true)
- |-- double_field: double (nullable = true)
- |-- decimal_field: decimal(1,1) (nullable = true)
- |-- string_field: string (nullable = true)
+ |-- byte_field0: byte (nullable = true)
+ |-- int_field0: integer (nullable = true)
+ |-- long_field0: long (nullable = true)
+ |-- short_field0: short (nullable = true)
+ |-- float_field0: float (nullable = true)
+ |-- double_field0: double (nullable = true)
+ |-- decimal_field0: decimal(1,1) (nullable = true)
+ |-- string_field0: string (nullable = true)
+ |-- struct_field0: struct (nullable = true)
+ |    |-- struct_field1: struct (nullable = true)
+ |    |    |-- array_field2: array (nullable = true)
+ |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |-- array_field3: array (nullable = true)
+ |    |    |    |    |    |-- element: string (containsNull = true)
+ |-- array_field0: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- array_field1: array (nullable = true)
+ |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |-- array_field2: array (nullable = true)
+ |    |    |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |    |    |-- map_field3: map (nullable = true)
+ |    |    |    |    |    |    |    |-- key: string
+ |    |    |    |    |    |    |    |-- value: string (valueContainsNull = true)
+ |-- map_field0: map (nullable = true)
+ |    |-- key: string
+ |    |-- value: struct (valueContainsNull = true)
+ |    |    |-- map_field1: map (nullable = true)
+ |    |    |    |-- key: string
+ |    |    |    |-- value: struct (valueContainsNull = true)
+ |    |    |    |    |-- map_field2: map (nullable = true)
+ |    |    |    |    |    |-- key: string
+ |    |    |    |    |    |-- value: struct (valueContainsNull = true)
+ |    |    |    |    |    |    |-- map_field3: map (nullable = true)
+ |    |    |    |    |    |    |    |-- key: string
+ |    |    |    |    |    |    |    |-- value: string (valueContainsNull = true)
 ```
-with null values
-```scala
-+----------+---------+----------+-----------+-----------+------------+-------------+------------+
-|byte_field|int_field|long_field|short_field|float_field|double_field|decimal_field|string_field|
-+----------+---------+----------+-----------+-----------+------------+-------------+------------+
-+----------+---------+----------+-----------+-----------+------------+-------------+------------+
-```
+

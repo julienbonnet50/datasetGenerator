@@ -1,0 +1,1 @@
+class SchemaException(message: String) extends Exception(message)
