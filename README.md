@@ -2,9 +2,11 @@
 
 # datasetGenerator
 
-datasetGenerator is dataset generic generator with any types and any level of nest made in scala 2.12.
+**datasetGenerator** is dataset generic generator with any types and any level of nest made in scala 2.12.
 
 It will firstly generate a schema, depending on type mentionned and level of nest required. Then generate for every field of any types a random value.
+
+## Conf 
 
 You can use /dataset/datasetArgs/conf.scala to set your configurations and just launch the spark-shell after checked all prerequired.
 
