@@ -206,7 +206,7 @@ object DatasetGenerator {
                         parentSchema.add(StructField("array_field" + levelOfNestProcessed, ArrayType(StringType), true))
                     }
                 case "Map" => 
-                if (levelOfNestProcessed < levelOfNestMax) {
+                if (levelOfNestProcessed < levelOfNestMax + 1) { // Map as a sublevel of key/value 
                     val nestedSchema: StructType = new StructType
                     val randomComplexType = pickRandomValue(this.trueComplexArgs)
                     nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
@@ -280,7 +280,7 @@ object DatasetGenerator {
 
         df.printSchema
 
-        println("\n ------- Saving dataset into /dataset/generatedDataset.parquet ------- \n")
+        println("\n ------- Saving dataset into " + datasetGeneratorPathToWrite + "/" + datasetGeneratorFilename + " ------- \n")
 
         val dfDone = df
             .repartition(datasetGeneratorRepartitionNum)
