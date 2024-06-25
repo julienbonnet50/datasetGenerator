@@ -11,6 +11,7 @@ object DatasetGenerator {
     private var datasetGeneratorlevelOfNest: Integer = 0
     private var datasetGeneratorNumberOfRows: Integer = 1
     private var datasetGeneratorPathToWrite: String = "null"
+    private var datasetRepartitionNum: Integer = 1
 
     private var datasetGeneratorContainsByte: Boolean = false
     private var datasetGeneratorContainsShort: Boolean = false
@@ -33,6 +34,11 @@ object DatasetGenerator {
 
     val random = new Random
 
+    def requireArgs(): Unit = {
+        require(trueArgs.length > 0, "We should at least have 1 field to true")
+        require(datasetGeneratorlevelOfNest > 0, "Level of nest should be > 0")
+        require(datasetRepartitionNum > 0, "--datasetGenerator-repartition-num should be a positive integer")
+    }
 
     def init(args: Array[String]): Unit = {
         @scala.annotation.tailrec
@@ -47,6 +53,8 @@ object DatasetGenerator {
                     nextArg(map ++ Map("datasetGeneratorPathToWrite" -> value.toString), tail)
                 case "--datasetGenerator-contains-byte" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorContainsByte" -> value.toBoolean), tail)
+                case "--datasetGenerator-repartition-num" :: value :: tail =>
+                    nextArg(map ++ Map("datasetRepartitionNum" -> value.toInt), tail)
                 case "--datasetGenerator-contains-short" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorContainsShort" -> value.toBoolean), tail)
                 case "--datasetGenerator-contains-integer" :: value :: tail =>
@@ -95,6 +103,8 @@ object DatasetGenerator {
 
         datasetGeneratorlevelOfNest = getOption("datasetGeneratorlevelOfNest", 1).asInstanceOf[Integer]
         datasetGeneratorNumberOfRows = getOption("datasetGeneratorNumberOfRows", 1).asInstanceOf[Integer]
+        datasetRepartitionNum = getOption("datasetRepartitionNum", 1).asInstanceOf[Integer]
+
         datasetGeneratorPathToWrite = getOption("datasetGeneratorPathToWrite", 1).asInstanceOf[String]
         datasetGeneratorContainsByte = getOption("datasetGeneratorContainsByte", false).asInstanceOf[Boolean]
         datasetGeneratorContainsShort = getOption("datasetGeneratorContainsShort", false).asInstanceOf[Boolean]
@@ -130,8 +140,6 @@ object DatasetGenerator {
     }
 
     def generateSchema(fieldNames: Seq[String], levelOfNestMax: Integer): StructType = {
-        require(levelOfNestMax > 0)
-        require(fieldNames.length > 0, "We should at least have 1 field to true")
         if((levelOfNestMax > 1) && !(fieldNames.contains("Map")) && !(fieldNames.contains("Struct")) && !(fieldNames.contains("Array"))) {
             throw new SchemaException("level of nest : " + levelOfNestMax + " but any complex type found") 
         }
@@ -179,31 +187,35 @@ object DatasetGenerator {
                     parentSchema.add(StructField("char_field" + levelOfNestProcessed, CharType(10), true))
                 case "Struct" => 
                     val nestedSchema: StructType = new StructType
-                    if (levelOfNestProcessed < levelOfNestMax) {
+                    if (levelOfNestProcessed < levelOfNestMax - 1) {
                         val randomComplexType = pickRandomValue(this.trueComplexArgs)
                         nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
                         parentSchema.add(StructField("struct_field" + levelOfNestProcessed, processField(randomComplexType, nestedSchema, levelOfNestProcessed + 1)))
-                    } else {
-                        nestedSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
-                        parentSchema.add(StructField("struct_field" + levelOfNestProcessed, processField("String", nestedSchema, levelOfNestProcessed + 1)))
+                    } 
+                     else {
+                        parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
                     }
                 case "Array" => 
-                    if (levelOfNestProcessed < levelOfNestMax) {
+                    if (levelOfNestProcessed < levelOfNestMax - 2) {
                         val nestedSchema: StructType = new StructType
                         val randomComplexType = pickRandomValue(this.trueComplexArgs)
                         nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
-                        parentSchema.add(StructField("array_field" + levelOfNestProcessed, ArrayType(processField(randomComplexType, nestedSchema, levelOfNestProcessed + 1))))
-                    } else {
+                        parentSchema.add(StructField("array_field" + levelOfNestProcessed, ArrayType(processField(randomComplexType, nestedSchema, levelOfNestProcessed + 2))))
+                    } else if (levelOfNestProcessed < levelOfNestMax - 1) {
                         parentSchema.add(StructField("array_field" + levelOfNestProcessed, ArrayType(StringType), true))
+                    } else {
+                        parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
                     }
                 case "Map" => 
-                if (levelOfNestProcessed < levelOfNestMax) {
+                if (levelOfNestProcessed < levelOfNestMax - 2) {
                     val nestedSchema: StructType = new StructType
                     val randomComplexType = pickRandomValue(this.trueComplexArgs)
                     nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
-                    parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(getDataType(randomComplexType), processField(randomComplexType, nestedSchema, levelOfNestProcessed + 1))))
-                } else {
+                    parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(getDataType(randomComplexType), processField(randomComplexType, nestedSchema, levelOfNestProcessed + 2))))
+                } else if (levelOfNestProcessed < levelOfNestMax - 1) {
                     parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(StringType, StringType)))
+                } else {
+                    parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
                 }
                 case _ => 
                     println("Unknown type found " + field)
@@ -222,7 +234,7 @@ object DatasetGenerator {
     def elapsedTime(startTime: Long): Double = {
         val endTime = System.nanoTime()
         val elapsedTime = (endTime - startTime) / 1e9d
-        elapsedTime
+        BigDecimal(elapsedTime).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
     
     def startTimeApp(): String = {
@@ -240,6 +252,19 @@ object DatasetGenerator {
         println("number of rows : " + datasetGeneratorNumberOfRows)
         println("true type arguments : " + trueArgs)
     } 
+
+    def printTime(text: String, time: Long): Unit = {
+        println("\n ------- " + text + " (took : " + elapsedTime(time) + ") ------- \n")
+    }
+
+    def writeDataset(df: DataFrame): Unit = {
+        df
+            .repartition(datasetRepartitionNum)
+            .write
+            .format("parquet")
+            .mode("overwrite")
+            .save(datasetGeneratorPathToWrite)
+    }
         
      
     def main(): Unit = {
@@ -248,31 +273,34 @@ object DatasetGenerator {
         println("\n ------- App started : " + startTimeApp()  + " ------- \n")
 
         showArgs()
+        requireArgs()
 
-        println("\n ------- Schema generation started running ------- \n")
+        printTime("Schema generation started running", startTime)
 
         schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest)
 
         println(schema)
 
-        println("\n ------- Schema generation ended (took : " + elapsedTime(startTime) + ") ------- \n")
+        printTime("Schema generation ended", startTime)
 
-        println("\n ------- Dataset generation starting (took : " + elapsedTime(startTime) + ") ------- \n")
+        printTime("Dataset generation starting", startTime)
 
-        val rows = (1 to 10).map(_ => RandomDataGenerator.randomRow(this.random, schema))
+        val rows = (1 to datasetGeneratorNumberOfRows).map(_ => RandomDataGenerator.randomRow(this.random, schema))
 
         val df = spark.createDataFrame(spark.sparkContext.parallelize(rows), schema)
         
-        println("\n ------- Dataset generated show (took : " + elapsedTime(startTime) + ") ------- \n")
+        printTime("Dataset generated show()", startTime)
         
         df.show()
 
-        println("\n ------- Schema generated (took : " + elapsedTime(startTime) + ") ------- \n")
+        printTime("Schema generated", startTime)
 
         df.printSchema
 
-        println("\n ------- Saving dataset into /dataset/generatedDataset.parquet ------- \n")
+        printTime(s"Saving dataset into ${datasetGeneratorPathToWrite}", startTime)
 
-        df.write.format("parquet").mode("overwrite").save(datasetGeneratorPathToWrite)
+        writeDataset(df)
+
+        printTime("Saved dataset", startTime)
     }
 }

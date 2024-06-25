@@ -24,6 +24,10 @@ spark-shell.cmd ^
     -i {TODO: DEFINE}\datasetGenerator\dataset\datasetArgs\conf.scala ^
     -i {TODO: DEFINE}\Documents\datasetGenerator\main.scala ^
     -i {TODO: DEFINE}\main.scala ^
+    --conf "spark.hadoop.mapreduce.fileoutputcommitter.marksuccessfuljobs=false" ^
+    --conf "spark.sql.sources.commitProtocolClas=org.apache.spark.sql.execution.datasources.SQLHadoopMapReduceCommitProtocol" ^
+    --conf "spark.mapreduce.fileoutputcommitter.marksuccessfuljobs=false" ^
+    --conf "spark.hadoop.parquet.enable.summary-metadata=false" ^
     --name "Dataset Generic Generator" ^
     ::--master local[8] ^
     ::--driver-memory 6g

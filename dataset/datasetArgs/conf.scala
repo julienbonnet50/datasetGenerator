@@ -3,6 +3,7 @@ val confArray = Array(
     "--datasetGenerator-levelOfNest", "3",
     "--datasetGenerator-NumberOfRows", "100",
     "--datasetGenerator-pathToWrite", "pathTo/generatedDataset",
+    "--datasetGenerator-repartition-num", "1",
 
     /* Numeric type */
     "--datasetGenerator-contains-byte", "true",
