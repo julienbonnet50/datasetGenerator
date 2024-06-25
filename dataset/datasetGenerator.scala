@@ -38,7 +38,7 @@ object DatasetGenerator {
     def requireArgs(): Unit = {
         require(trueArgs.length > 0, "We should at least have 1 field to true")
         require(datasetGeneratorlevelOfNest > 0, "Level of nest should be > 0")
-        require(datasetRepartitionNum > 0, "--datasetGenerator-repartition-num should be a positive integer")
+        require(datasetGeneratorRepartitionNum > 0, "--datasetGenerator-repartition-num should be a positive integer")
     }
 
     def init(args: Array[String]): Unit = {
@@ -109,7 +109,6 @@ object DatasetGenerator {
         datasetGeneratorRepartitionNum = getOption("datasetGeneratorRepartitionNum", 1).asInstanceOf[Integer]
         datasetGeneratorlevelOfNest = getOption("datasetGeneratorlevelOfNest", 1).asInstanceOf[Integer]
         datasetGeneratorNumberOfRows = getOption("datasetGeneratorNumberOfRows", 1).asInstanceOf[Integer]
-        datasetRepartitionNum = getOption("datasetRepartitionNum", 1).asInstanceOf[Integer]
         datasetGeneratorPathToWrite = getOption("datasetGeneratorPathToWrite", "pathTo/generatedDataset").asInstanceOf[String]
         datasetGeneratorFilename = getOption("datasetGeneratorFilename", "datasetGenerated").asInstanceOf[String]
 
@@ -200,7 +199,7 @@ object DatasetGenerator {
                         parentSchema.add(StructField("struct_field" + levelOfNestProcessed, processField(randomComplexType, nestedSchema, levelOfNestProcessed + 1)))
                     } 
                      else {
-                        parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
+                        parentSchema.add(StructField("string_field_struct" + levelOfNestProcessed, StringType, true))
                     }
                 case "Array" => 
                     if (levelOfNestProcessed < levelOfNestMax - 2) {
@@ -211,19 +210,19 @@ object DatasetGenerator {
                     } else if (levelOfNestProcessed < levelOfNestMax - 1) {
                         parentSchema.add(StructField("array_field" + levelOfNestProcessed, ArrayType(StringType), true))
                     } else {
-                        parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
+                        parentSchema.add(StructField("string_field_array" + levelOfNestProcessed, StringType, true))
                     }
                 case "Map" => 
-                if (levelOfNestProcessed < levelOfNestMax - 2) {
-                    val nestedSchema: StructType = new StructType
-                    val randomComplexType = pickRandomValue(this.trueComplexArgs)
-                    nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
-                    parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(getDataType(randomComplexType), processField(randomComplexType, nestedSchema, levelOfNestProcessed + 2))))
-                } else if (levelOfNestProcessed < levelOfNestMax - 1) {
-                    parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(StringType, StringType)))
-                } else {
-                    parentSchema.add(StructField("string_field" + levelOfNestProcessed, StringType, true))
-                }
+                    if (levelOfNestProcessed < levelOfNestMax - 2) {
+                        val nestedSchema: StructType = new StructType
+                        val randomComplexType = pickRandomValue(this.trueComplexArgs)
+                        nestedSchema.add(StructField(randomComplexType + "_field" + levelOfNestProcessed, getDataType(randomComplexType), true))
+                        parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(getDataType(randomComplexType), processField(randomComplexType, nestedSchema, levelOfNestProcessed + 2))))
+                    } else if (levelOfNestProcessed < levelOfNestMax - 1) {
+                        parentSchema.add(StructField("map_field" + levelOfNestProcessed, MapType(StringType, StringType)))
+                    } else {
+                        parentSchema.add(StructField("string_field_map" + levelOfNestProcessed, StringType, true))
+                    }
                 case _ => 
                     println("Unknown type found " + field)
                     parentSchema
@@ -266,7 +265,7 @@ object DatasetGenerator {
 
     def writeDataset(df: DataFrame): Unit = {
         df
-            .repartition(datasetRepartitionNum)
+            .repartition(datasetGeneratorRepartitionNum)
             .write
             .format("parquet")
             .mode("overwrite")
@@ -284,7 +283,7 @@ object DatasetGenerator {
 
         printTime("Schema generation started running", startTime)
 
-        schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest - 1)
+        schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest)
 
         println(schema)
 
