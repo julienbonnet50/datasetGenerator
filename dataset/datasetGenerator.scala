@@ -11,7 +11,8 @@ object DatasetGenerator {
     private var datasetGeneratorlevelOfNest: Integer = 0
     private var datasetGeneratorNumberOfRows: Integer = 1
     private var datasetGeneratorPathToWrite: String = "null"
-    private var datasetRepartitionNum: Integer = 1
+    private var datasetGeneratorRepartitionNum: Integer = 1
+    private var datasetGeneratorFilename: String = "null"
 
     private var datasetGeneratorContainsByte: Boolean = false
     private var datasetGeneratorContainsShort: Boolean = false
@@ -49,6 +50,10 @@ object DatasetGenerator {
                     nextArg(map ++ Map("datasetGeneratorlevelOfNest" -> value.toInt), tail)
                 case "--datasetGenerator-NumberOfRows" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorNumberOfRows" -> value.toInt), tail)
+                case "--datasetGenerator-filename" :: value :: tail =>
+                    nextArg(map ++ Map("datasetGeneratorFilename" -> value.toString), tail)
+                case "--datasetGenerator-repartitionNum" :: value :: tail =>
+                    nextArg(map ++ Map("datasetGeneratorRepartitionNum" -> value.toInt), tail)
                 case "--datasetGenerator-pathToWrite" :: value :: tail =>
                     nextArg(map ++ Map("datasetGeneratorPathToWrite" -> value.toString), tail)
                 case "--datasetGenerator-contains-byte" :: value :: tail =>
@@ -101,11 +106,13 @@ object DatasetGenerator {
             }
         }
 
+        datasetGeneratorRepartitionNum = getOption("datasetGeneratorRepartitionNum", 1).asInstanceOf[Integer]
         datasetGeneratorlevelOfNest = getOption("datasetGeneratorlevelOfNest", 1).asInstanceOf[Integer]
         datasetGeneratorNumberOfRows = getOption("datasetGeneratorNumberOfRows", 1).asInstanceOf[Integer]
         datasetRepartitionNum = getOption("datasetRepartitionNum", 1).asInstanceOf[Integer]
+        datasetGeneratorPathToWrite = getOption("datasetGeneratorPathToWrite", "pathTo/generatedDataset").asInstanceOf[String]
+        datasetGeneratorFilename = getOption("datasetGeneratorFilename", "datasetGenerated").asInstanceOf[String]
 
-        datasetGeneratorPathToWrite = getOption("datasetGeneratorPathToWrite", 1).asInstanceOf[String]
         datasetGeneratorContainsByte = getOption("datasetGeneratorContainsByte", false).asInstanceOf[Boolean]
         datasetGeneratorContainsShort = getOption("datasetGeneratorContainsShort", false).asInstanceOf[Boolean]
         datasetGeneratorContainsInteger = getOption("datasetGeneratorContainsInteger", false).asInstanceOf[Boolean]
@@ -277,7 +284,7 @@ object DatasetGenerator {
 
         printTime("Schema generation started running", startTime)
 
-        schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest)
+        schema = generateSchema(trueArgs, datasetGeneratorlevelOfNest - 1)
 
         println(schema)
 
@@ -296,7 +303,6 @@ object DatasetGenerator {
         printTime("Schema generated", startTime)
 
         df.printSchema
-
         printTime(s"Saving dataset into ${datasetGeneratorPathToWrite}", startTime)
 
         writeDataset(df)
